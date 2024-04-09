@@ -5,6 +5,7 @@ class Settings(BaseSettings):
     
     BOT_TOKEN: str
     ADMIN_ID: str
+    FB_CHAT_ID: str
     
     PROXY_API_KEY: str
     

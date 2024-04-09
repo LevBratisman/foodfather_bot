@@ -4,4 +4,4 @@ from app.config import settings
 
 class IsAdmin(Filter):
     async def __call__(self, message):
-        return message.from_user.id in settings.ADMIN_ID
+        return message.from_user.id == settings.ADMIN_ID

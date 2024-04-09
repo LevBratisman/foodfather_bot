@@ -10,6 +10,7 @@ from app.handlers.user_private import user_private_router
 from app.handlers.get_recipe import get_recipe_router
 from app.handlers.get_recipe_by_ings import get_recipe_by_ings_router
 from app.handlers.get_random_recipe import get_random_recipe_router
+from app.handlers.admin_private import admin_router
 from app.handlers.commands import cmd_router
 from app.middlewares.db import DataBaseSession
 
@@ -25,6 +26,7 @@ dp = Dispatcher()
 
 # Include Routers
 dp.include_router(cmd_router)
+dp.include_router(admin_router)
 dp.include_router(get_recipe_router)
 dp.include_router(get_recipe_by_ings_router)
 dp.include_router(get_random_recipe_router)

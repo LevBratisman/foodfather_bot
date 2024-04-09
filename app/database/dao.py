@@ -16,3 +16,9 @@ async def orm_add_user(
         session.add(User(user_id=user_id, 
                          user_name=user_name))
         await session.commit()
+        
+        
+async def get_all_users_id(session: AsyncSession):
+    query = select(User.user_id)
+    result = await session.execute(query)
+    return result.scalars().all()
