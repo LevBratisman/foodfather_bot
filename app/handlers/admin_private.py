@@ -7,7 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.filters.admin import IsAdmin
 from app.keyboards.reply import get_keyboard
-from app.database.dao import get_all_users_id
+from app.database.dao import get_all_users_id, get_reviews_by_limit, get_all_reviews
 
 from app.handlers.user_private import menu_keyboard
 
@@ -19,10 +19,11 @@ admin_router.message.filter(IsAdmin())
 admin_keyboard = get_keyboard(
     "📊Статистика",
     "🔉Сделать рассылку",
+    "💬Отзывы",
     "⬅️Назад",
     "🔄Сбросить",
     placeholder="Выберите действие", 
-    sizes=(2, 2)
+    sizes=(2, 1, 2)
 )
 
 
@@ -30,6 +31,10 @@ admin_keyboard = get_keyboard(
 class SendAll(StatesGroup):
     photo = State()
     message = State()
+    
+    
+class GetReviews(StatesGroup):
+    limit = State()
     
     
 @admin_router.message(StateFilter("*"), F.text == "🔄Сбросить")
@@ -55,7 +60,29 @@ async def open_admin_panel(message: Message, state: FSMContext):
 @admin_router.message(StateFilter(None), F.text == "📊Статистика")
 async def get_statistic(message: Message, session: AsyncSession):
     await message.answer("Количество пользователей: " + str(len(await get_all_users_id(session))))
+    await message.answer("Количество отзывов: " + str(len(await get_all_reviews(session))))
     
+# Get reviews -----------------------------------------
+
+@admin_router.message(StateFilter(None), F.text == "💬Отзывы")
+async def get_reviews(message: Message, state: FSMContext):
+    await state.set_state(GetReviews.limit)
+    await message.answer("Сколько отзывов вы хотите получить?")
+    
+    
+@admin_router.message(GetReviews.limit, F.text)
+async def get_reviews_limit(message: Message, state: FSMContext, session: AsyncSession):
+    try:
+        int(message.text)
+    except:
+        await message.answer("Вы ввели некорректное значение")
+        return
+    await state.update_data(limit=int(message.text))
+    await state.clear()
+    await message.answer("Отзывы:" + f'\n\n{"-" * 20}')
+    for review in await get_reviews_by_limit(session, message.text):
+        await message.answer(review.text + f'\n\n{"-" * 20}')
+        
     
 # Send all --------------------------------------------
 

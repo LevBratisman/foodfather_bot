@@ -1,15 +1,16 @@
 import asyncio
 from aiogram.types import Message, ReplyKeyboardRemove
-from aiogram import Router, F
+from aiogram import Router, F, Bot
 from aiogram.fsm.state import State, StatesGroup
 from aiogram.fsm.context import FSMContext
 from aiogram.filters import StateFilter, Command
+from aiogram.enums import ChatAction
 
 from app.keyboards.reply import get_keyboard
 from app.handlers.user_private import menu_keyboard
 from app.handlers.get_random_recipe import cancel_keyboard
 from app.services.gpt_free import generate_response
-from app.common.texts import recipe, recipe_start
+from app.common.texts import recipe, recipe_start, menu_text
 
 get_recipe_router = Router()
 
@@ -35,10 +36,10 @@ class RecipeDatails(StatesGroup):
 async def cancel(message: Message, state: FSMContext):
     await state.clear()
     await message.answer("Без проблем!")
-    await message.answer("Итак, что я могу для вас сделать?", reply_markup=menu_keyboard)
+    await message.answer(menu_text, reply_markup=menu_keyboard)
 
 
-@get_recipe_router.message(StateFilter(None), F.text.casefold() == "🔠найти рецепт блюда по названию")
+@get_recipe_router.message(StateFilter(None), F.text.casefold() == "1")
 async def get_recipe(message: Message, state: FSMContext):
     await state.set_state(RecipeDatails.recipe_name)
     # await asyncio.sleep(1)
@@ -47,8 +48,9 @@ async def get_recipe(message: Message, state: FSMContext):
     
     
 @get_recipe_router.message(StateFilter(RecipeDatails.recipe_name), F.text)
-async def get_recipe_name(message: Message, state: FSMContext):    
+async def get_recipe_name(message: Message, state: FSMContext, bot: Bot):    
     await message.answer("Начинаю поиск рецепта...")
+    await bot.send_chat_action(message.chat.id, ChatAction.TYPING)
     gpt_response = generate_response(message.text)
     if gpt_response == "Не могу ничего придумать...":
         await message.answer_sticker("CAACAgIAAxkBAAIQrWYVCZdKKMAyBicW-562kmzMUoyZAAKrCwACLw_wBoLABuDn5cg3NAQ")
@@ -62,6 +64,7 @@ async def get_recipe_name(message: Message, state: FSMContext):
         await asyncio.sleep(1)
         await message.answer(gpt_response, reply_markup=functional_keyboard)
         await state.clear()
+    
     
     
 @get_recipe_router.message(StateFilter(RecipeDatails.recipe_name))
@@ -78,12 +81,12 @@ async def get_additional(message: Message, state: FSMContext):
 @get_recipe_router.message(StateFilter(RecipeDatails.additional), F.text)
 async def to_menu_from_add(message: Message, state: FSMContext):
     await state.clear()
-    await message.answer("Итак, что я могу для вас сделать?", reply_markup=menu_keyboard)    
+    await message.answer(menu_text, reply_markup=menu_keyboard)    
     
 
 @get_recipe_router.message(StateFilter(None), F.text.casefold() == "⬅️вернуться к меню")
 async def to_menu(message: Message):
-    await message.answer("Итак, что я могу для вас сделать?", reply_markup=menu_keyboard)
+    await message.answer(menu_text, reply_markup=menu_keyboard)
     
     
 @get_recipe_router.message(StateFilter(None), F.text.casefold() == "🧠найти еще рецепт")

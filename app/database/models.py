@@ -1,5 +1,5 @@
-from sqlalchemy import ARRAY, JSON, BigInteger, DateTime, Float, ForeignKey, Numeric, String, Text, func
-from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
+from sqlalchemy import DateTime, ForeignKey, String, Text, func
+from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
 
 class Base(DeclarativeBase):
@@ -13,3 +13,11 @@ class User(Base):
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     user_id: Mapped[int] = mapped_column(unique=True)
     user_name: Mapped[str] = mapped_column(String(150), nullable=True)
+    
+    
+class Review(Base):
+    __tablename__ = 'review'
+
+    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey('user.id'))
+    text: Mapped[str] = mapped_column(Text)
